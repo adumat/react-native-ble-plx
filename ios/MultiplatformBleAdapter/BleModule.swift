@@ -1287,4 +1287,56 @@ public class BleClientManager : NSObject {
     private func dispatchEvent(_ event: String, value: Any) {
         delegate?.dispatchEvent(event, value: value)
     }
+    
+    // MARK: Bridge bypass methods
+    
+    @objc
+    public func monitorCharacteristicForDeviceBypassingRN(
+                    _ deviceIdentifier: String,
+                           serviceUUID: String,
+                    characteristicUUID: String,
+                         transactionId: String,
+                    onValue: @escaping (_ value: [AnyHashable: Any], _ transactionId: String) -> Void,
+                    onError: @escaping (_ value: String, _ transactionId: String) -> Void
+    ) {
+        
+        let characteristicObservable = getCharacteristicForDevice(deviceIdentifier,
+                                                    serviceUUID: serviceUUID,
+                                                    characteristicUUID: characteristicUUID)
+        
+        // this is a horrible copy paste of safeMonitorCharacteristicForDevice
+        let observable: Observable<Characteristic> = characteristicObservable
+            .flatMap { [weak self] (characteristic: Characteristic) -> Observable<Characteristic> in
+                let characteristicIdentifier = characteristic.jsIdentifier
+                if let monitoringObservable = self?.monitoredCharacteristics[characteristicIdentifier] {
+                    return monitoringObservable
+                } else {
+                    let newObservable: Observable<Characteristic> = characteristic
+                        .setNotificationAndMonitorUpdates()
+                        .do(onNext: nil, onError: nil, onCompleted: nil, onSubscribe: nil, onDispose: {
+                            _ = characteristic.setNotifyValue(false).subscribe()
+                            self?.monitoredCharacteristics[characteristicIdentifier] = nil
+                        })
+                        .share()
+                    self?.monitoredCharacteristics[characteristicIdentifier] = newObservable
+                    return newObservable
+                }
+            }
+
+        let disposable = observable.subscribe(
+            onNext: { [weak self] characteristic in
+                if self?.pendingReads[characteristic.jsIdentifier] ?? 0 == 0 {
+                    onValue(characteristic.asJSObject, transactionId)
+                }
+            }, onError: { [weak self] error in
+                onError(error.bleError.toJS, transactionId)
+                self?.dispatchEvent(BleEvent.readEvent, value: [error.bleError.toJS, NSNull(), transactionId])
+            }, onCompleted: {
+
+            }, onDisposed: { [weak self] in
+                self?.transactions.removeDisposable(transactionId)
+            })
+
+        transactions.replaceDisposable(transactionId, disposable: disposable)
+    }
 }

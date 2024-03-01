@@ -966,4 +966,14 @@ public class BlePlxModule extends ReactContextBaseJavaModule {
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
       .emit(event.name, params);
   }
+
+  public void monitorCharacteristicForDeviceBypassingRN(String deviceIdentifier,
+      String serviceUUID,
+      String characteristicUUID,
+      String transactionId,
+      OnEventCallback<Characteristic> onEventCallback,
+      OnErrorCallback onErrorCallback) {
+    bleAdapter.monitorCharacteristicForDevice(deviceIdentifier, serviceUUID, characteristicUUID, transactionId,
+        onEventCallback, onErrorCallback);
+  }
 }

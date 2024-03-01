@@ -9,7 +9,6 @@
 #import "BlePlx.h"
 #import "BlePlx-Swift.h"
 
-
 @interface BlePlx () <BleClientManagerDelegate>
 @property(nonatomic) BleClientManager* manager;
 @end
@@ -505,6 +504,23 @@ RCT_EXPORT_METHOD(logLevel:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
     [_manager logLevel:resolve
                 reject:reject];
+}
+
+// Mark: Bypass bridge methods -----------------------------------------------------------------------------------------
+
+- (void) monitorCharacteristicForDeviceBypassingRN: (NSString*)deviceIdentifier
+                                       serviceUUID: (NSString*)serviceUUID
+                                characteristicUUID: (NSString*)characteristicUUID
+                                     transactionID: (NSString*)transactionId
+                                           onValue: (void(^)(NSDictionary* _Nonnull, NSString* _Nonnull))onValue
+                                           onError: (void(^)(NSString* _Nonnull, NSString* _Nonnull))onError
+{
+    [_manager monitorCharacteristicForDeviceBypassingRN:deviceIdentifier 
+                                            serviceUUID:serviceUUID
+                                     characteristicUUID:characteristicUUID
+                                          transactionId:transactionId
+                                                onValue:onValue
+                                                onError:onError];
 }
 
 @end

@@ -12,4 +12,11 @@
 
 @interface BlePlx : RCTEventEmitter <RCTBridgeModule>
 
+- (void) monitorCharacteristicForDeviceBypassingRN: (NSString*)deviceIdentifier
+                                       serviceUUID: (NSString*)serviceUUID
+                                characteristicUUID: (NSString*)characteristicUUID
+                                     transactionID: (NSString*)transactionId
+                                           onValue: (void(^)(NSDictionary* _Nonnull, NSString* _Nonnull))onValue
+                                           onError: (void(^)(NSString* _Nonnull, NSString* _Nonnull))onError;
+
 @end
